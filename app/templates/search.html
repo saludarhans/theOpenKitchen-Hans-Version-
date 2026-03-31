@@ -1,0 +1,15 @@
+{% extends "base.html" %}
+{% block content %}
+	<h1>Input info</h1>
+	<form action="" method="post" novalidate>
+		{{ form.hidden_tag() }}
+		<p>
+			{{ form.city.label }}<br>
+			{{ form.city(size=32) }}
+		</p>
+		<p> {{ form.submit() }}<br></p>
+		{% if city %}
+		<p> {{city.name}}&#39;s population is {{city.population}} </p>
+		{% endif %}
+	</form>
+{% endblock %}
