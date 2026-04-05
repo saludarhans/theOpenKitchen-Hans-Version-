@@ -1,7 +1,7 @@
 from app import app
 from flask import render_template, request, redirect, url_for
 from app import db
-from app.forms import CreateRecipeForm
+from app.forms import CreateRecipeForm, SearchForm
 from app.models import (
     Recipe, Ingredient, RecipeCategory, RecipeDietaryTag, RecipeAllergen,
     Category, DietaryTag, Allergen, MeasurementUnit
@@ -118,39 +118,52 @@ def view_recipe(recipe_id):
                            dietary_tags = dietary_tags,
                            allergens    = allergens)
 
-@app.route("/search", methods=["GET"])
-def search_recipes():
-    # 1. Get the search query from the user (via query string)
-    searchQuery = request.args.get("q", "")  # e.g., /search?q=Easy
+@app.route('/search', methods=['GET', 'POST'])
+def search():
+    form = SearchForm()
+    results = set()  # Use a set to avoid duplicates
 
-    # 2. Fetch all recipes from the database
-    recipeList = Recipe.query.all()
+    if form.validate_on_submit():
+        query = form.query.data.strip().lower()
 
-    # 3. Prepare output lists
-    firstPrioritizationList = []
-    secondPrioritizationList = []
+        # 1️⃣ Search by title
+        title_matches = Recipe.query.filter(Recipe.title.ilike(f"%{query}%")).all()
+        results.update(title_matches)
 
-    # 4. Prioritize recipes based on title, tags, description
-    for i in recipeList:
-        # Title match → First Priority
-        if searchQuery.lower() in i.title.lower():
-            firstPrioritizationList.append(i)
-        '''
-        # Tags match → First Priority (only if not already in list)
-        elif any(searchQuery.lower() in tag.lower() for tag in i.tags):
-            firstPrioritizationList.append(i)
-        # Description match → Second priority
-        elif searchQuery.lower() in i.description.lower():
-            secondPrioritizationList.append(i)
-        '''
-    # 5. Sort lists by rating
-     # firstPrioritizationList = sorted(firstPrioritizationList, key=lambda r: r.getRating(), reverse=True)
-     # secondPrioritizationList = sorted(secondPrioritizationList, key=lambda r: r.getRating(), reverse=True)
+        # 2️⃣ Search by description
+        desc_matches = Recipe.query.filter(Recipe.description.ilike(f"%{query}%")).all()
+        results.update(desc_matches)
 
-   # finalOutput = firstPrioritizationList + secondPrioritizationList
+        # 3️⃣ Search by ingredients
+        ingredient_matches = (
+            db.session.query(Recipe)
+            .join(Ingredient)
+            .filter(Ingredient.name.ilike(f"%{query}%"))
+            .all()
+        )
+        results.update(ingredient_matches)
 
-    # 6. Render the results in a template
-    return render_template("search_results.html", recipes=firstPrioritizationList, query=searchQuery)
+        # 4️⃣ Search by dietary tags
+        tag_matches = (
+            db.session.query(Recipe)
+            .join(RecipeDietaryTag)
+            .join(DietaryTag)
+            .filter(DietaryTag.name.ilike(f"%{query}%"))
+            .all()
+        )
+        results.update(tag_matches)
+
+        # 5️⃣ Search by allergens
+        allergen_matches = (
+            db.session.query(Recipe)
+            .join(RecipeAllergen)
+            .join(Allergen)
+            .filter(Allergen.name.ilike(f"%{query}%"))
+            .all()
+        )
+        results.update(allergen_matches)
+
+    return render_template('search.html', form=form, results=list(results))
 
 """
 @app.route('/recipe/create', methods=['GET', 'POST'])

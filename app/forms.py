@@ -36,7 +36,9 @@ class CreateRecipeForm(FlaskForm):
                         validators=[Optional()], choices=[])
     isPublic     = BooleanField('Make this recipe public', default=True)#Think about this one if it should be implemented
 
-#class SearchForm(FlaskForm):
+class SearchForm(FlaskForm):
+    query = StringField('Search', validators=[DataRequired()])
+    submit = SubmitField('Search')
 """
 class PopulationForm(FlaskForm):
     city = StringField('City:', validators=[DataRequired()])

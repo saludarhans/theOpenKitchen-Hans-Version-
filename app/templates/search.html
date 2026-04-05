@@ -1,15 +1,29 @@
-{% extends "base.html" %}
-{% block content %}
-	<h1>Input info</h1>
-	<form action="" method="post" novalidate>
-		{{ form.hidden_tag() }}
-		<p>
-			{{ form.city.label }}<br>
-			{{ form.city(size=32) }}
-		</p>
-		<p> {{ form.submit() }}<br></p>
-		{% if city %}
-		<p> {{city.name}}&#39;s population is {{city.population}} </p>
-		{% endif %}
-	</form>
-{% endblock %}
+ {% extends "base.html" %}
+ 
+ {% block title %}Search Recipes{% endblock %}
+ 
+ {% block content %}
+ <h1>Search Recipes</h1>
+ 
+ <form method="POST" action="{{ url_for('search') }}">
+     {{ form.hidden_tag() }}
+     <div>
+         {{ form.query.label }} {{ form.query(size=40) }}
+         {{ form.submit() }}
+     </div>
+ </form>
+ 
+ <h2>Results:</h2>
+ {% if results %}
+     <ul>
+     {% for recipe in results %}
+         <li>
+             <strong>{{ recipe.title }}</strong><br>
+             {{ recipe.description[:100] if recipe.description else 'No description' }}...
+         </li>
+     {% endfor %}
+     </ul>
+ {% else %}
+     <p>No recipes found.</p>
+ {% endif %}
+ {% endblock %}
