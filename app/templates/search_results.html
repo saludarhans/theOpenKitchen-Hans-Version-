@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Search Results for "{{ query }}"</title>
+</head>
+<body>
+    <h1>Search Results for "{{ query }}"</h1>
+
+    {% if recipes %}
+        <ul>
+        {% for recipe in recipes %}
+            <li>
+                <strong>{{ recipe.title }}</strong>
+            </li>
+        {% endfor %}
+        </ul>
+    {% else %}
+        <p>No recipes found matching "{{ query }}"</p>
+    {% endif %}
+</body>
+</html>

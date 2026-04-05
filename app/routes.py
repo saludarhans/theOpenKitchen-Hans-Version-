@@ -118,6 +118,40 @@ def view_recipe(recipe_id):
                            dietary_tags = dietary_tags,
                            allergens    = allergens)
 
+@app.route("/search", methods=["GET"])
+def search_recipes():
+    # 1. Get the search query from the user (via query string)
+    searchQuery = request.args.get("q", "")  # e.g., /search?q=Easy
+
+    # 2. Fetch all recipes from the database
+    recipeList = Recipe.query.all()
+
+    # 3. Prepare output lists
+    firstPrioritizationList = []
+    secondPrioritizationList = []
+
+    # 4. Prioritize recipes based on title, tags, description
+    for i in recipeList:
+        # Title match → First Priority
+        if searchQuery.lower() in i.title.lower():
+            firstPrioritizationList.append(i)
+        '''
+        # Tags match → First Priority (only if not already in list)
+        elif any(searchQuery.lower() in tag.lower() for tag in i.tags):
+            firstPrioritizationList.append(i)
+        # Description match → Second priority
+        elif searchQuery.lower() in i.description.lower():
+            secondPrioritizationList.append(i)
+        '''
+    # 5. Sort lists by rating
+     # firstPrioritizationList = sorted(firstPrioritizationList, key=lambda r: r.getRating(), reverse=True)
+     # secondPrioritizationList = sorted(secondPrioritizationList, key=lambda r: r.getRating(), reverse=True)
+
+   # finalOutput = firstPrioritizationList + secondPrioritizationList
+
+    # 6. Render the results in a template
+    return render_template("search_results.html", recipes=firstPrioritizationList, query=searchQuery)
+
 """
 @app.route('/recipe/create', methods=['GET', 'POST'])
 def create_recipe():
