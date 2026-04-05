@@ -1,0 +1,362 @@
+{% extends "base.html" %}
+{% block title %}Create Recipe — The Open Kitchen{% endblock %}
+
+{% block content %}
+<style>
+    form {
+        background: white; padding: 2.5rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    h2 {
+        font-size: 1rem; color: #1B4D35;
+        margin: 1.5rem 0 0.5rem;
+        padding-bottom: 4px;
+        border-bottom: 2px solid #d6ead8;
+    }
+    label {
+        display: block; font-size: 0.95rem;
+        font-weight: bold; margin: 10px 0 3px;
+    }
+    .req { color: #E07B39; }
+    .opt { font-size: 0.75rem; color: #73726c; font-weight: normal; }
+    input[type="text"], input[type="number"],
+    textarea, select {
+        width: 100%; padding: 8px 10px;
+        border: 1px solid #c0bdb5; border-radius: 6px;
+        font-size: 0.9rem; background: #fafaf8;
+        font-family: inherit;
+    }
+    textarea { resize: vertical; min-height: 120px; }
+    .two-col  { display: grid; grid-template-columns: 1fr 1fr;     gap: 12px; }
+    .three-col{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+
+    /* ── Ingredient table ───────────────────────────────────────────────────── */
+    .ing-table {
+        width: 100%; border-collapse: collapse;
+        margin-bottom: 8px;
+    }
+    .ing-table th {
+        text-align: left; font-size: 0.8rem;
+        color: #1B4D35; padding: 4px 6px;
+        border-bottom: 2px solid #d6ead8;
+    }
+    .ing-table td { padding: 5px 6px; vertical-align: middle; }
+    .ing-table input, .ing-table select {
+        padding: 6px 8px; font-size: 0.88rem;
+    }
+    .qty-display {
+        font-weight: bold; color: #1B4D35;
+        font-size: 0.9rem; min-width: 50px;
+        display: inline-block;
+    }
+
+    /* ── Scaling widget ─────────────────────────────────────────────────────── */
+    .scaling-box {
+        background: #d6ead8; border-radius: 8px;
+        padding: 10px 14px; margin-bottom: 10px;
+        display: flex; align-items: center; gap: 14px;
+        flex-wrap: wrap;
+    }
+    .scaling-box label { margin: 0; font-size: 0.85rem; }
+    .scaling-box input[type="number"] {
+        width: 80px; font-weight: bold;
+        color: #1B4D35; text-align: center;
+    }
+    .scale-note {
+        font-size: 0.78rem; color: #2E7D52; margin-top: 4px;
+    }
+
+    .btn-add {
+        background: #d6ead8; color: #1B4D35;
+        border: none; padding: 7px 14px;
+        border-radius: 6px; cursor: pointer;
+        font-size: 0.85rem; font-weight: bold;
+        margin-top: 6px;
+    }
+    .btn-remove {
+        background: #fde8d0; color: #E07B39;
+        border: none; width: 32px; height: 32px;
+        border-radius: 6px; cursor: pointer; font-size: 1rem;
+    }
+    .checkbox-group {
+        display: flex; flex-wrap: wrap;
+        gap: 10px; margin-top: 6px;
+    }
+    .checkbox-group label {
+        font-weight: normal; font-size: 0.85rem;
+        display: flex; align-items: center;
+        gap: 5px; margin: 0; cursor: pointer;
+    }
+    .errors {
+        background: #fcebeb; border: 1px solid #f09595;
+        border-radius: 6px; padding: 12px 16px;
+        margin-bottom: 16px;
+    }
+    .errors p { color: #a32d2d; font-size: 0.85rem; margin: 2px 0; }
+    .actions { display: flex; gap: 12px; margin-top: 24px; }
+    .btn-submit {
+        background: #1B4D35; color: white; border: none;
+        padding: 10px 28px; border-radius: 6px;
+        font-size: 0.95rem; font-weight: bold; cursor: pointer;
+    }
+    .btn-submit:hover { background: #2E7D52; }
+    .btn-cancel {
+        background: #f1efe8; color: #3d3d3a;
+        border: 1px solid #c0bdb5; padding: 10px 20px;
+        border-radius: 6px; font-size: 0.95rem;
+        text-decoration: none; display: inline-flex;
+        align-items: center;
+    }
+</style>
+
+<form method="POST" action="/recipe/create">
+    {{ form.hidden_tag() }}
+
+    {% if errors %}
+    <div class="errors">
+        {% for e in errors %}
+        <p>&#9679; {{ e }}</p>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- ── Required Fields ──────────────────────────────────────────────────── -->
+    <h2>Required Information</h2>
+
+    <label for="title">
+        Recipe Name <span class="req">*</span>
+    </label>
+    {{ form.title(placeholder="e.g. Grandma's Lasagna", maxlength=150) }}
+
+    <!-- Base servings — required because it is the reference for scaling -->
+    <div style="margin-top:10px; max-width:220px">
+        <label for="baseServings">
+            Base Serving Size <span class="req">*</span>
+        </label>
+        {{ form.baseServings(placeholder="e.g. 4", min=1) }}
+        <p class="scale-note">
+            This is how many people your ingredient amounts are written for.
+        </p>
+    </div>
+
+    <!-- ── Ingredients with live scaling ────────────────────────────────────── -->
+    <h2>Ingredients <span class="req">*</span></h2>
+
+    <!-- Scaling adjuster — shown above the ingredient table -->
+    <div class="scaling-box">
+        <label for="adjustServings">
+            Adjust servings to preview scaling:
+        </label>
+        <input type="number" id="adjustServings"
+               min="1" placeholder="4"
+               oninput="scaleIngredients(this.value)">
+        <span style="font-size:0.82rem; color:#2E7D52;">
+            Quantities update live — base amounts are always saved.
+        </span>
+    </div>
+
+    <table class="ing-table" id="ing-table">
+        <thead>
+            <tr>
+                <th style="width:35%">Ingredient Name</th>
+                <th style="width:18%">Base Qty</th>
+                <th style="width:18%">Scaled Qty</th>
+                <th style="width:20%">Unit</th>
+                <th style="width:9%"></th>
+            </tr>
+        </thead>
+        <tbody id="ing-body">
+            <tr class="ing-row">
+                <td>
+                    <input type="text" name="ing_name"
+                           placeholder="e.g. Flour">
+                </td>
+                <td>
+                    <!-- Base quantity — always saved to DB -->
+                    <input type="number" name="ing_quantity"
+                           class="base-qty" step="0.01" min="0"
+                           placeholder="2"
+                           oninput="scaleIngredients(
+                               document.getElementById('adjustServings').value
+                           )">
+                </td>
+                <td>
+                    <!-- Scaled preview — display only, not submitted -->
+                    <span class="qty-display">—</span>
+                </td>
+                <td>
+                    <select name="ing_unit">
+                        <option value="">-- Unit --</option>
+                        {% for u in units %}
+                        <option value="{{ u.id }}">
+                            {{ u.name }} ({{ u.abbreviation }})
+                        </option>
+                        {% endfor %}
+                    </select>
+                </td>
+                <td>
+                    <button type="button" class="btn-remove"
+                            onclick="removeIng(this)">&#10005;</button>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+    <button type="button" class="btn-add" onclick="addIng()">
+        + Add Ingredient
+    </button>
+
+    <!-- ── Recipe Instructions ──────────────────────────────────────────────── -->
+    <h2>Recipe Instructions <span class="req">*</span></h2>
+    <p style="font-size:0.82rem; color:#73726c; margin-bottom:6px;">
+        Write each step clearly. You can number them or use line breaks.
+    </p>
+    {{ form.instructions(
+        placeholder="Step 1: Preheat the oven to 375°F.\nStep 2: Mix flour and salt in a large bowl.\nStep 3: ...",
+        style="min-height:180px"
+    ) }}
+
+    <!-- ── Optional Fields ──────────────────────────────────────────────────── -->
+    <h2>Optional Information</h2>
+    
+    <label>Description <span class="opt">*</span></label>
+    {{ form.description(
+        placeholder="Brief description of the dish...",
+        style="min-height:60px"
+    ) }}
+    
+    <div class="two-col" style="margin-top:10px">
+        <div>
+            <label>Prep Time (mins) <span class="opt">(optional)</span></label>
+            {{ form.prepTime(placeholder="e.g. 20") }}
+        </div>
+        <div>
+            <label>Cook Time (mins) <span class="opt">(optional)</span></label>
+            {{ form.cookTime(placeholder="e.g. 45") }}
+        </div>
+    </div>
+
+    <label style="margin-top:10px">
+        Category <span class="opt">(optional)</span>
+    </label>
+    {{ form.category_id() }}
+
+    <label>Dietary Tags <span class="opt">(optional)</span></label>
+    <div class="checkbox-group">
+        {% for subfield in form.dietary_tags %}
+	    <label>
+	        <input type="checkbox" name="{{ subfield.name }}" value="{{ subfield.data }}">
+	        {{ subfield.label.text }}
+	    </label>
+        {% endfor %}
+    </div>
+
+    <label>Allergens <span class="opt">(optional)</span></label>
+    <div class="checkbox-group">
+        {% for subfield in form.allergens %}
+		<label>
+	        <input type="checkbox" name="{{ subfield.name }}" value="{{ subfield.data }}">
+	        {{ subfield.label.text }}
+	    </label>
+        {% endfor %}
+    </div>
+
+    <div class="actions">
+        <button type="submit" class="btn-submit">Create Recipe</button>
+        <a href="/" class="btn-cancel">Cancel</a>
+    </div>
+</form>
+
+<script>
+    // ── Unit options string built once from Jinja ──────────────────────────────
+    const unitOpts = `
+        {% for u in units %}
+        <option value="{{ u.id }}">
+            {{ u.name }} ({{ u.abbreviation }})
+        </option>
+        {% endfor %}
+    `;
+
+    // ── Add a new ingredient row ───────────────────────────────────────────────
+    function addIng() {
+        const row = document.createElement('tr');
+        row.className = 'ing-row';
+        row.innerHTML = `
+            <td>
+                <input type="text" name="ing_name" placeholder="e.g. Sugar">
+            </td>
+            <td>
+                <input type="number" name="ing_quantity" class="base-qty"
+                       step="0.01" min="0" placeholder="1"
+                       oninput="scaleIngredients(
+                           document.getElementById('adjustServings').value
+                       )">
+            </td>
+            <td><span class="qty-display">—</span></td>
+            <td>
+                <select name="ing_unit">
+                    <option value="">-- Unit --</option>
+                    ${unitOpts}
+                </select>
+            </td>
+            <td>
+                <button type="button" class="btn-remove"
+                        onclick="removeIng(this)">&#10005;</button>
+            </td>
+        `;
+        document.getElementById('ing-body').appendChild(row);
+    }
+
+    // ── Remove an ingredient row ───────────────────────────────────────────────
+    function removeIng(btn) {
+        const tbody = document.getElementById('ing-body');
+        if (tbody.children.length > 1) {
+            btn.closest('tr').remove();
+        }
+    }
+
+    // ── Live ingredient scaling ────────────────────────────────────────────────
+    // Reads baseServings from the form input, calculates the ratio,
+    // and updates the "Scaled Qty" display column.
+    // The base quantities in the hidden inputs are never changed —
+    // only the display spans update so the correct base values are saved.
+    function scaleIngredients(targetServings) {
+        const baseServings = parseFloat(
+            document.getElementById('baseServings').value
+        );
+        const target = parseFloat(targetServings);
+
+        const displays = document.querySelectorAll('.qty-display');
+        const baseQtys = document.querySelectorAll('.base-qty');
+
+        // If either value is missing or invalid show dashes
+        if (!baseServings || !target || baseServings <= 0 || target <= 0) {
+            displays.forEach(d => d.textContent = '—');
+            return;
+        }
+
+        const ratio = target / baseServings;
+
+        baseQtys.forEach((input, i) => {
+            const base = parseFloat(input.value);
+            if (!isNaN(base) && base > 0) {
+                const scaled = base * ratio;
+                // Show up to 2 decimal places, remove trailing zeros
+                displays[i].textContent = parseFloat(scaled.toFixed(2));
+            } else {
+                displays[i].textContent = '—';
+            }
+        });
+    }
+
+    // ── Sync the scaling preview when base servings changes ───────────────────
+    document.getElementById('baseServings').addEventListener('input', function() {
+        const adjuster = document.getElementById('adjustServings');
+        // If user has not set an adjuster value yet, default it to base
+        if (!adjuster.value) {
+            adjuster.value = this.value;
+        }
+        scaleIngredients(adjuster.value);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+{% block title %}{{ recipe.title }} — The Open Kitchen{% endblock %}
+
+{% block content %}
+<style>
+    .recipe-container {
+        background: white; padding: 2rem;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+    .recipe-header {
+        border-bottom: 2px solid #d6ead8;
+        padding-bottom: 1rem;
+        margin-bottom: 1.5rem;
+    }
+    .recipe-header h1 {
+        font-size: 1.8rem; color: #1B4D35;
+        margin-bottom: 6px;
+    }
+    .recipe-header p {
+        font-size: 0.9rem; color: #73726c;
+    }
+    .meta-row {
+        display: flex; flex-wrap: wrap;
+        gap: 10px; margin: 1rem 0;
+    }
+    .meta-badge {
+        background: #d6ead8; color: #1B4D35;
+        padding: 5px 12px; border-radius: 20px;
+        font-size: 0.85rem; font-weight: bold;
+    }
+    h2 {
+        font-size: 1rem; color: #1B4D35;
+        margin: 1.5rem 0 0.5rem;
+        padding-bottom: 4px;
+        border-bottom: 2px solid #d6ead8;
+    }
+
+    /* ── Scaling widget ─────────────────────────────────────────────────── */
+    .scaling-box {
+        background: #d6ead8; border-radius: 8px;
+        padding: 10px 14px; margin-bottom: 10px;
+        display: flex; align-items: center;
+        gap: 14px; flex-wrap: wrap;
+    }
+    .scaling-box label {
+        font-size: 0.85rem; font-weight: bold;
+        color: #1B4D35;
+    }
+    .scaling-box input[type="number"] {
+        width: 80px; padding: 6px 10px;
+        border: 1px solid #c0bdb5; border-radius: 6px;
+        font-size: 0.9rem; font-weight: bold;
+        color: #1B4D35; text-align: center;
+    }
+
+    /* ── Ingredient table ───────────────────────────────────────────────── */
+    .ing-table {
+        width: 100%; border-collapse: collapse;
+        margin-bottom: 1rem;
+    }
+    .ing-table th {
+        text-align: left; font-size: 0.82rem;
+        color: #1B4D35; padding: 6px 8px;
+        border-bottom: 2px solid #d6ead8;
+    }
+    .ing-table td {
+        padding: 7px 8px; font-size: 0.9rem;
+        border-bottom: 1px solid #f1efe8;
+        color: #3d3d3a;
+    }
+    .ing-table tr:last-child td { border-bottom: none; }
+    .scaled-qty {
+        font-weight: bold; color: #1B4D35;
+    }
+
+    /* ── Instructions ───────────────────────────────────────────────────── */
+    .instructions-box {
+        background: #fafaf8; border: 1px solid #e8e6df;
+        border-radius: 8px; padding: 1.2rem;
+        font-size: 0.9rem; line-height: 1.8;
+        color: #3d3d3a; white-space: pre-wrap;
+    }
+
+    /* ── Tags ───────────────────────────────────────────────────────────── */
+    .tag-group {
+        display: flex; flex-wrap: wrap; gap: 8px;
+        margin-top: 6px;
+    }
+    .tag {
+        background: #d6ead8; color: #1B4D35;
+        padding: 4px 12px; border-radius: 20px;
+        font-size: 0.82rem;
+    }
+    .tag-allergen {
+        background: #fde8d0; color: #9c4e14;
+        padding: 4px 12px; border-radius: 20px;
+        font-size: 0.82rem;
+    }
+
+    .back-link {
+        display: inline-block; margin-bottom: 1rem;
+        color: #1B4D35; text-decoration: none;
+        font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+</style>
+
+<a href="{{ url_for('dashboard') }}" class="back-link">
+    &#8592; Back to Dashboard
+</a>
+
+<div class="recipe-container">
+
+    <!-- Header -->
+    <div class="recipe-header">
+        <h1>{{ recipe.title }}</h1>
+        {% if recipe.description %}
+        <p>{{ recipe.description }}</p>
+        {% endif %}
+
+        <!-- Meta badges -->
+        <div class="meta-row">
+            {% if recipe.prepTime %}
+            <span class="meta-badge">Prep: {{ recipe.prepTime }} min</span>
+            {% endif %}
+            {% if recipe.cookTime %}
+            <span class="meta-badge">Cook: {{ recipe.cookTime }} min</span>
+            {% endif %}
+            <span class="meta-badge">Serves: {{ recipe.baseServings }}</span>
+        </div>
+
+        <!-- Category -->
+        {% if categories %}
+        <div class="tag-group">
+            {% for rc in categories %}
+            <span class="tag">{{ rc.category.name }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Ingredients with live scaling -->
+    <h2>Ingredients</h2>
+
+    <div class="scaling-box">
+        <label>Adjust servings:</label>
+        <input type="number" id="adjustServings"
+               value="{{ recipe.baseServings }}" min="1"
+               oninput="scaleIngredients(this.value)">
+        <span style="font-size:0.82rem; color:#2E7D52;">
+            Base: {{ recipe.baseServings }} servings
+        </span>
+    </div>
+
+    <table class="ing-table">
+        <thead>
+            <tr>
+                <th>Ingredient</th>
+                <th>Quantity</th>
+                <th>Unit</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ing in ingredients %}
+            <tr>
+                <td>{{ ing.name }}</td>
+                <td>
+                    <span class="scaled-qty"
+                          data-base="{{ ing.quantity }}">
+                        {{ ing.quantity }}
+                    </span>
+                </td>
+                <td>{{ ing.unit.abbreviation }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- Instructions -->
+    <h2>Instructions</h2>
+    <div class="instructions-box">{{ recipe.instructions }}</div>
+
+    <!-- Dietary Tags -->
+    {% if dietary_tags %}
+    <h2>Dietary Tags</h2>
+    <div class="tag-group">
+        {% for dt in dietary_tags %}
+        <span class="tag">{{ dt.dietaryTag.name }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Allergens -->
+    {% if allergens %}
+    <h2>Allergens</h2>
+    <div class="tag-group">
+        {% for ra in allergens %}
+        <span class="tag-allergen">&#9888; {{ ra.allergen.name }}</span>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <p style="margin-top:1.5rem; font-size:0.78rem; color:#b4b2a9;">
+        Created: {{ recipe.dateCreated.strftime('%Y-%m-%d %H:%M') }}
+    </p>
+
+</div>
+
+<script>
+    const baseServings = {{ recipe.baseServings }};
+
+    function scaleIngredients(target) {
+        target = parseFloat(target);
+        if (!target || target <= 0) return;
+
+        const ratio = target / baseServings;
+        document.querySelectorAll('.scaled-qty').forEach(el => {
+            const base = parseFloat(el.dataset.base);
+            if (!isNaN(base)) {
+                el.textContent = parseFloat((base * ratio).toFixed(2));
+            }
+        });
+    }
+</script>
+{% endblock %}

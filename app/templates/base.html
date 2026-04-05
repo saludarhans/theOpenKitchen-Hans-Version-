@@ -1,29 +1,53 @@
-<html>
-	<head>
-		<style>
-		table, th, td {
-			border: 1px solid black;
-			border-collapse: collapse;
-		}
-		th, td {
-			padding: 5px;
-		}
-		th{
-			text-align: left;
-		}
-		</style>
-		<title>City population app</title>
-	</head>
-	<body>
-		<h1 style=color:red>Populations of cities </h1>
-		<hr>
-		<div>
-		<a href="/view_all">View All</a>
-		<a href="/population">Add record</a>
-		<a href="/delete">Delete City</a>
-		<a href="/search">Search record</a>
-		</div>
-		<hr>
-		{% block content %}{% endblock %}
-	</body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}The Open Kitchen{% endblock %}</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: Helvetica, Arial, sans-serif;
+            background: #f1efe8;
+            color: #3d3d3a;
+        }
+        nav {
+            background: #1B4D35;
+            color: white;
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        nav a.brand {
+            color: white;
+            text-decoration: none;
+            font-size: 1.3rem;
+            font-weight: bold;
+        }
+        nav a.btn-nav {
+            background: #E07B39;
+            color: white;
+            padding: 7px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: bold;
+        }
+        .container {
+            max-width: 860px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+        }
+    </style>
+</head>
+<body>
+<nav>
+    <a class="brand" href="/">The Open Kitchen</a>
+    <a class="btn-nav" href="/recipe/create">+ Create Recipe</a>
+</nav>
+<div class="container">
+    {% block content %}{% endblock %}
+</div>
+</body>
 </html>

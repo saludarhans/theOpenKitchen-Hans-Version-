@@ -1,0 +1,256 @@
+CREATE TABLE users (
+    id              SERIAL PRIMARY KEY,
+    firstName       VARCHAR(50) NOT NULL,
+    lastName        VARCHAR(50) NOT NULL,
+    email           VARCHAR(100) UNIQUE NOT NULL,
+    password        VARCHAR(255) NOT NULL,
+    role            VARCHAR(25) NOT NULL DEFAULT 'contributor',
+    isActive        BOOLEAN DEFAULT TRUE,
+    dateCreated     TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE measurement_units (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(32) UNIQUE NOT NULL,
+    abbreviation    VARCHAR(32) UNIQUE NOT NULL,
+    system          VARCHAR(32) NOT NULL,
+    isActive        BOOLEAN DEFAULT TRUE
+);
+
+CREATE TABLE  recipes (
+    id              SERIAL PRIMARY KEY,
+    authorID        INTEGER NOT NULL,
+    title           VARCHAR(150) NOT NULL,
+    description     TEXT,
+    instructions    TEXT NOT NULL,
+    forkedFrom      INTEGER,
+    baseServings    INTEGER NOT NULL,
+    prepTime        INTEGER,
+    cookTime        INTEGER,
+    isPublic        BOOLEAN DEFAULT TRUE,
+    dateCreated     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_recipe_author 
+        FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE CASCADE,
+    
+    CONSTRAINT fk_recipe_forked 
+        FOREIGN KEY (forkedFrom) REFERENCES recipes(id) ON DELETE SET NULL
+);
+
+CREATE TABLE ingredients (
+    id              SERIAL PRIMARY KEY,
+    recipeID        INTEGER NOT NULL,
+    unitID          INTEGER NOT NULL,
+    name            VARCHAR(32) NOT NULL,
+    quantity        FLOAT NOT NULL,
+
+    CONSTRAINT fk_ingredient_recipe 
+        FOREIGN KEY (recipeID) REFERENCES recipes(id) ON DELETE CASCADE,
+    
+    CONSTRAINT fk_ingredient_unit 
+        FOREIGN KEY (unitID) REFERENCES measurement_units(id) ON DELETE RESTRICT
+);
+
+CREATE TABLE  categories (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(32) UNIQUE NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS recipe_categories (
+    id              SERIAL PRIMARY KEY,
+    recipeID        INTEGER NOT NULL,
+    categoryID      INTEGER NOT NULL,
+
+    CONSTRAINT fk_rc_recipe 
+        FOREIGN KEY (recipeID) REFERENCES recipes(id) ON DELETE CASCADE,
+    
+    CONSTRAINT fk_rc_category 
+        FOREIGN KEY (categoryID) REFERENCES categories(id) ON DELETE CASCADE,
+
+    CONSTRAINT uq_recipe_category UNIQUE (recipeID, categoryID)
+);
+
+CREATE TABLE allergens (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(32) UNIQUE NOT NULL
+);
+
+CREATE TABLE recipe_allergens (
+    id              SERIAL PRIMARY KEY,
+    recipeID        INTEGER NOT NULL,
+    allergenID      INTEGER NOT NULL,
+
+    CONSTRAINT fk_ra_recipe 
+        FOREIGN KEY (recipeID) REFERENCES recipes(id) ON DELETE CASCADE,
+    
+    CONSTRAINT fk_ra_allergen 
+        FOREIGN KEY (allergenID) REFERENCES allergens(id) ON DELETE CASCADE,
+
+    CONSTRAINT uq_recipe_allergen UNIQUE (recipeID, allergenID)
+);
+
+CREATE TABLE dietary_tags (
+    id              SERIAL PRIMARY KEY,
+    name            VARCHAR(32) UNIQUE NOT NULL
+);
+
+
+CREATE TABLE recipe_dietary_tags (
+    id              SERIAL PRIMARY KEY,
+    recipeID        INTEGER NOT NULL,
+    dietaryTagID    INTEGER NOT NULL,
+
+    CONSTRAINT fk_rdt_recipe 
+        FOREIGN KEY (recipeID) REFERENCES recipes(id) ON DELETE CASCADE,
+    
+    CONSTRAINT fk_rdt_tag 
+        FOREIGN KEY (dietaryTagID) REFERENCES dietary_tags(id) ON DELETE CASCADE,
+
+    CONSTRAINT uq_recipe_dietary_tag UNIQUE (recipeID, dietaryTagID)
+);
+
+CREATE TABLE comments (
+    id          SERIAL PRIMARY KEY,
+    recipeID    INTEGER NOT NULL,
+    authorID    INTEGER NOT NULL,
+    content     TEXT NOT NULL,
+    dateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_comment_recipe
+        FOREIGN KEY (recipeID) REFERENCES recipes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_comment_author
+        FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE ratings (
+    id          SERIAL PRIMARY KEY,
+    recipeID    INTEGER NOT NULL,
+    userID      INTEGER NOT NULL,
+    stars       INTEGER NOT NULL,
+    dateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_rating_recipe
+        FOREIGN KEY (recipeID) REFERENCES recipes(id) ON DELETE CASCADE,
+    CONSTRAINT fk_rating_user
+        FOREIGN KEY (userID) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE quick_tips (
+    id          SERIAL PRIMARY KEY,
+    authorID    INTEGER NOT NULL,
+    title       VARCHAR(150) NOT NULL,
+    content     TEXT NOT NULL,
+    dateCreated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_quicktip_author
+        FOREIGN KEY (authorID) REFERENCES users(id) ON DELETE CASCADE
+);
+
+
+"""
+CREATE TABLE commnets (
+	id              SERIAL PRIMARY KEY,
+    recipeID        INTEGER NOT NULL,
+    userID    		INTEGER NOT NULL,
+
+   	CONSTRAINT fk_rdt_recipe 
+        FOREIGN KEY (recipeID) REFERENCES recipes(id) ON DELETE CASCADE,
+    
+    CONSTRAINT fk_rdt_tag 
+        FOREIGN KEY (dietaryTagID) REFERENCES dietary_tags(id) ON DELETE CASCADE,
+
+    CONSTRAINT uq_recipe_dietary_tag UNIQUE (recipeID, dietaryTagID)
+);"""
+
+"""
+CREATE TABLE users
+(
+    id          integer not null,
+    firstName   varchar(50) not null,
+    lastName    varchar(50) not null,
+    email       varchar(100) unique not null,
+    password    varchar(255) not null,
+    role        varchar(20) not null,
+    isActive    boolean,
+    dateCreated datetime not null,
+    primary key (id)
+);
+
+CREATE TABLE measurement_units
+(
+    id           integer not null,
+    name         varchar(32) not null,
+    abbreviation varchar(32) not null,
+    system       varchar(32) not null,
+    isActive     boolean,
+    primary key (id)
+);
+
+CREATE TABLE recipes
+(
+    id           integer not null,
+    authorID     integer not null,
+    title        varchar(150) not null,
+    description  text,
+    instructions text not null,
+    forkedFrom   integer,
+    baseServings integer not null,
+    prepTime     integer,
+    cookTime     integer,
+    isPublic     boolean,
+    dateCreated  datetime not null,
+    primary key (id)
+);
+
+CREATE TABLE ingredients
+(
+    id       integer not null,
+    recipeID integer not null,
+    unitID   integer not null,
+    name     varchar(32) not null,
+    quantity float not null,
+    primary key (id)
+);
+
+CREATE TABLE categories
+(
+    id   integer not null,
+    name varchar(32) not null,
+    primary key (id)
+);
+
+CREATE TABLE recipe_categories
+(
+    id         integer not null,
+    recipeID   integer not null,
+    categoryID integer not null,
+    primary key (id)
+);
+
+CREATE TABLE allergens
+(
+    id   integer not null,
+    name varchar(32) not null,
+    primary key (id)
+);
+
+CREATE TABLE recipe_allergens
+(
+    id         integer not null,
+    recipeID   integer not null,
+    allergenID integer not null,
+    primary key (id)
+);
+
+CREATE TABLE dietary_tags
+(
+    id   integer not null,
+    name varchar(32) not null,
+    primary key (id)
+);
+
+CREATE TABLE recipe_dietary_tags
+(
+    id           integer not null,
+    recipeID     integer not null,
+    dietaryTagID integer not null,
+    primary key (id)
+);
+

@@ -88,6 +88,8 @@ class RecipeCategory(db.Model):
     recipeID   = db.Column(db.Integer, db.ForeignKey('recipes.id'),    unique=False, nullable=False)
     categoryID = db.Column(db.Integer, db.ForeignKey('categories.id'), unique=False, nullable=False)
 
+    category = db.relationship('Category', backref='recipe_categories')
+
     def __repr__(self):
         return 'RecipeCategory: recipeID=' + str(self.recipeID) + ' categoryID=' + str(self.categoryID)
 
@@ -101,18 +103,6 @@ class Allergen(db.Model):
     def __repr__(self):
         return self.name
 
-
-class RecipeAllergen(db.Model):
-    __tablename__ = 'recipe_allergens'
-
-    id         = db.Column(db.Integer, primary_key=True)
-    recipeID   = db.Column(db.Integer, db.ForeignKey('recipes.id'),    unique=False, nullable=False)
-    allergenID = db.Column(db.Integer, db.ForeignKey('allergens.id'),  unique=False, nullable=False)
-
-    def __repr__(self):
-        return 'RecipeAllergen: recipeID=' + str(self.recipeID) + ' allergenID=' + str(self.allergenID)
-
-
 class DietaryTag(db.Model):
     __tablename__ = 'dietary_tags'
 
@@ -122,6 +112,18 @@ class DietaryTag(db.Model):
     def __repr__(self):
         return self.name
 
+class RecipeAllergen(db.Model):
+    __tablename__ = 'recipe_allergens'
+
+    id         = db.Column(db.Integer, primary_key=True)
+    recipeID   = db.Column(db.Integer, db.ForeignKey('recipes.id'),    unique=False, nullable=False)
+    allergenID = db.Column(db.Integer, db.ForeignKey('allergens.id'),  unique=False, nullable=False)
+
+    allergen = db.relationship('Allergen', backref='recipe_allergens')
+
+    def __repr__(self):
+        return 'RecipeAllergen: recipeID=' + str(self.recipeID) + ' allergenID=' + str(self.allergenID)
+
 
 class RecipeDietaryTag(db.Model):
     __tablename__ = 'recipe_dietary_tags'
@@ -130,9 +132,11 @@ class RecipeDietaryTag(db.Model):
     recipeID     = db.Column(db.Integer, db.ForeignKey('recipes.id'),      unique=False, nullable=False)
     dietaryTagID = db.Column(db.Integer, db.ForeignKey('dietary_tags.id'), unique=False, nullable=False)
 
+    dietaryTag = db.relationship('DietaryTag', backref='recipe_dietary_tags')
+
     def __repr__(self):
         return 'RecipeDietaryTag: recipeID=' + str(self.recipeID) + ' dietaryTagID=' + str(self.dietaryTagID)
-        
+   
 class Comment(db.Model):
     __tablename__ = 'comments'
 
@@ -169,3 +173,39 @@ class QuickTip(db.Model):
 
     def __repr__(self):
         return 'Recipes: recipeID=' + str(self.recipeID) + 'Title: ' +  self.title + ': ' + self.content[:50]
+
+# Old
+
+"""
+class RecipeAllergen(db.Model):
+    __tablename__ = 'recipe_allergens'
+
+    id         = db.Column(db.Integer, primary_key=True)
+    recipeID   = db.Column(db.Integer, db.ForeignKey('recipes.id'),    unique=False, nullable=False)
+    allergenID = db.Column(db.Integer, db.ForeignKey('allergens.id'),  unique=False, nullable=False)
+
+
+    def __repr__(self):
+        return 'RecipeAllergen: recipeID=' + str(self.recipeID) + ' allergenID=' + str(self.allergenID)
+
+
+class DietaryTag(db.Model):
+    __tablename__ = 'dietary_tags'
+
+    id   = db.Column(db.Integer,    primary_key=True)
+    name = db.Column(db.String(32), unique=True,  nullable=False)
+
+    def __repr__(self):
+        return self.name
+
+
+class RecipeDietaryTag(db.Model):
+    __tablename__ = 'recipe_dietary_tags'
+
+    id           = db.Column(db.Integer, primary_key=True)
+    recipeID     = db.Column(db.Integer, db.ForeignKey('recipes.id'),      unique=False, nullable=False)
+    dietaryTagID = db.Column(db.Integer, db.ForeignKey('dietary_tags.id'), unique=False, nullable=False)
+
+    def __repr__(self):
+        return 'RecipeDietaryTag: recipeID=' + str(self.recipeID) + ' dietaryTagID=' + str(self.dietaryTagID)
+"""     
