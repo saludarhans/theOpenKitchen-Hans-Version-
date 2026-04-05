@@ -1,29 +1,38 @@
- {% extends "base.html" %}
- 
- {% block title %}Search Recipes{% endblock %}
- 
- {% block content %}
- <h1>Search Recipes</h1>
- 
- <form method="POST" action="{{ url_for('search') }}">
-     {{ form.hidden_tag() }}
-     <div>
-         {{ form.query.label }} {{ form.query(size=40) }}
-         {{ form.submit() }}
-     </div>
- </form>
- 
- <h2>Results:</h2>
- {% if results %}
-     <ul>
-     {% for recipe in results %}
-         <li>
-             <strong>{{ recipe.title }}</strong><br>
-             {{ recipe.description[:100] if recipe.description else 'No description' }}...
-         </li>
-     {% endfor %}
-     </ul>
- {% else %}
-     <p>No recipes found.</p>
- {% endif %}
- {% endblock %}
+{% extends "base.html" %}
+
+{% block content %}
+<h2>Search Results for "{{ query }}"</h2>
+
+{% if results %}
+    {% for recipe in results %}
+    <div style="display: flex; justify-content: space-between; align-items: center;
+                background-color: #7aa7f0; color: white; padding: 1rem; margin-bottom: 1rem;
+                border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.2);">
+        <!-- Left side: Recipe title -->
+        <div style="font-weight: bold; font-size: 1.2rem;">
+            <a href="{{ url_for('view_recipe', recipe_id=recipe.id) }}" style="color: white; text-decoration: none;">
+                {{ recipe.title }}
+            </a>
+        </div>
+
+        <!-- Right side: Additional info -->
+        <div style="text-align: right;">
+            {% if recipe.description %}
+                <span>{{ recipe.description }}</span><br>
+            {% endif %}
+            {% if recipe.baseServings %}
+                <span>Servings: {{ recipe.baseServings }}</span><br>
+            {% endif %}
+            {% if recipe.prepTime %}
+                <span>Prep: {{ recipe.prepTime }} min</span><br>
+            {% endif %}
+            {% if recipe.cookTime %}
+                <span>Cook: {{ recipe.cookTime }} min</span>
+            {% endif %}
+        </div>
+    </div>
+    {% endfor %}
+{% else %}
+    <p>No recipes found matching "{{ query }}".</p>
+{% endif %}
+{% endblock %}
