@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <title>The Open Kitchen</title>
+
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
@@ -30,6 +31,16 @@
             font-size: 2rem;
             text-align: center;
             text-shadow: 3px 3px 0 rgba(0,0,0,0.5);
+
+            transition: all 0.2s ease;
+        }
+
+        nav a.brand:hover {
+            transform: translateY(-1px);
+        }
+
+        nav a.brand:active {
+            transform: translateY(1px) scale(0.98);
         }
 
         /* ── Nav buttons ──────────────────────────────────────── */
@@ -53,9 +64,23 @@
             font-weight: bold;
             border: none;
             cursor: pointer;
+
+            /* NEW */
+            box-shadow: 0 4px 6px rgba(0,0,0,0.25);
+            transition: all 0.2s ease;
         }
 
-        /* ── Search Bar (ANIMATED) ────────────────────────────── */
+        .btn-nav:hover, .btn-search:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 10px rgba(0,0,0,0.3);
+        }
+
+        .btn-nav:active, .btn-search:active {
+            transform: translateY(1px) scale(0.97);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* ── Search Bar (Animated) ────────────────────────────── */
         #search-bar {
             position: absolute;
             right: 0;
@@ -75,7 +100,6 @@
             transition: all 0.3s ease;
         }
 
-        /* Visible state */
         #search-bar.active {
             opacity: 1;
             transform: translateY(0);
@@ -97,6 +121,17 @@
             border-radius: 4px;
             font-weight: bold;
             cursor: pointer;
+
+            box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+            transition: all 0.2s ease;
+        }
+
+        #search-bar input[type="submit"]:hover {
+            transform: translateY(-1px);
+        }
+
+        #search-bar input[type="submit"]:active {
+            transform: scale(0.96);
         }
 
         .container {
@@ -121,6 +156,7 @@
 </head>
 
 <body>
+
 <nav>
     <a class="brand" href="{{ url_for('dashboard') }}">The Open Kitchen</a>
 
@@ -128,7 +164,7 @@
         <a class="btn-nav" href="{{ url_for('create_recipe') }}">+ Create Recipe</a>
         <button class="btn-search" onclick="toggleSearch()">Search</button>
 
-        <!-- Search form -->
+        <!-- Search Form -->
         <form id="search-bar" method="GET" action="{{ url_for('search') }}">
             <input type="text" name="q" placeholder="Search recipes..." value="{{ query|default('') }}">
             <input type="submit" value="Go">
@@ -139,5 +175,6 @@
 <div class="container">
     {% block content %}{% endblock %}
 </div>
+
 </body>
 </html>
